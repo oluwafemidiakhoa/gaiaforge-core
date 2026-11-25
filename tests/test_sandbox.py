@@ -152,6 +152,15 @@ class SandboxTests(unittest.TestCase):
         self.assertTrue(result["newly_passing"])
         self.assertFalse(result["recommend_promotion"])
 
+    def test_refuses_ledger_with_parent_components(self):
+        from subprocess import CompletedProcess
+        ledger = self.repo / "tests" / ".." / "ledger.jsonl"
+        with patch("gaiaforge.sandbox.shutil.which", return_value="docker"), \
+             patch("gaiaforge.sandbox.subprocess.run", return_value=CompletedProcess([], 0, "", "")):
+            with self.assertRaisesRegex(SandboxError, "ledger must be outside"):
+                sandbox_verify(self.repo, image=IMAGE, authorized=True,
+                               evidence_ledger=ledger)
+
     def test_refuses_ledger_in_repo(self):
         from subprocess import CompletedProcess
         with patch("gaiaforge.sandbox.shutil.which", return_value="docker"), \

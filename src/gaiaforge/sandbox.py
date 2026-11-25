@@ -197,7 +197,10 @@ def sandbox_verify(repo: Path, *, image: str, authorized: bool = False,
     if check_image.returncode != 0:
         raise SandboxError("pinned image not present locally or Docker unavailable")
     if evidence_ledger is not None:
-        evidence_ledger = Path(evidence_ledger).absolute()
+        # Normalize both paths with the same canonicalization. On Windows,
+        # TemporaryDirectory paths can contain 8.3 short-name aliases while
+        # repo.resolve() expands them, so absolute() alone is insufficient.
+        evidence_ledger = Path(evidence_ledger).resolve(strict=False)
         if evidence_ledger == repo or repo in evidence_ledger.parents:
             raise SandboxError("evidence ledger must be outside tested repository")
     suite_id = _suite_digest(repo)
