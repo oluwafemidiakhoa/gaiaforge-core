@@ -12,6 +12,7 @@ from .models import eligible_tasks, validate_plan
 from .staging import stage_proposal, ProposalError
 from .verification import compare_evaluations, run_verification
 from .sandbox import sandbox_verify, compare_sandbox_runs
+from .improvement import assess_candidates
 
 
 def load_json(path: str) -> dict:
@@ -23,7 +24,7 @@ def load_json(path: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="gaiaforge", description="GaiaForge Core v0.3.0")
+    parser = argparse.ArgumentParser(prog="gaiaforge", description="GaiaForge Core v0.4.0")
     commands = parser.add_subparsers(dest="command", required=True)
     inspect = commands.add_parser("inspect", help="hash a bounded, allowlisted file inventory")
     inspect.add_argument("path")
@@ -55,6 +56,9 @@ def main(argv: list[str] | None = None) -> int:
     sandbox_compare = commands.add_parser("sandbox-compare", help="compare saved Docker verification reports")
     sandbox_compare.add_argument("baseline")
     sandbox_compare.add_argument("candidate")
+    improve = commands.add_parser("assess-improvements", help="review bounded proposal candidates using frozen Docker reports")
+    improve.add_argument("manifest")
+    improve.add_argument("--ledger")
     audit = commands.add_parser("audit", help="verify ledger hash chain")
     audit.add_argument("ledger")
     args = parser.parse_args(argv)
@@ -76,6 +80,8 @@ def main(argv: list[str] | None = None) -> int:
                                     timeout=args.timeout, evidence_ledger=Path(args.ledger) if args.ledger else None)
         elif args.command == "sandbox-compare":
             output = compare_sandbox_runs(load_json(args.baseline), load_json(args.candidate))
+        elif args.command == "assess-improvements":
+            output = assess_candidates(Path(args.manifest), evidence_ledger=Path(args.ledger) if args.ledger else None)
         elif args.command == "record":
             output = append_record(Path(args.ledger), args.kind, load_json(args.payload))
         else:

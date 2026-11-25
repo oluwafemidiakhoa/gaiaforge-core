@@ -134,3 +134,20 @@ Apache-2.0. See `LICENSE`.
 ## Publishing to GitHub
 
 Follow [docs/PUBLISH.md](docs/PUBLISH.md) to create a new remote without altering an existing repository.
+
+## v0.4 — Evidence-gated candidate assessment
+
+Version 0.4 adds `gaiaforge assess-improvements` for **read-only** comparison of up to
+five independently supplied baseline/candidate Docker reports and JSON code proposals.
+It rejects incompatible suites, forged-looking inconsistent flags, invalid digests,
+unsafe manifest paths and over-budget candidate lists. A newly passing candidate is
+marked `human_review_required` only; releases and automatic promotion stay disabled.
+
+```cmd
+python examples\improvement\make_demo.py
+gaiaforge assess-improvements examples\improvement\generated\manifest.json
+```
+
+The example reports are **synthetic**. See `docs/IMPROVEMENT_GATE.md` for format,
+security limitations and evidence provenance requirements. No live LLM agent,
+automated patch generation or self-modifying recursion is implemented in v0.4.
