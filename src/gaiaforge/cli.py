@@ -11,6 +11,7 @@ from .ledger import append_record, read_verified
 from .models import eligible_tasks, validate_plan
 from .staging import stage_proposal, ProposalError
 from .verification import compare_evaluations, run_verification
+from .sandbox import sandbox_verify, compare_sandbox_runs
 
 
 def load_json(path: str) -> dict:
@@ -22,7 +23,7 @@ def load_json(path: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="gaiaforge", description="GaiaForge Core v0.2.1")
+    parser = argparse.ArgumentParser(prog="gaiaforge", description="GaiaForge Core v0.3.0")
     commands = parser.add_subparsers(dest="command", required=True)
     inspect = commands.add_parser("inspect", help="hash a bounded, allowlisted file inventory")
     inspect.add_argument("path")
@@ -45,6 +46,15 @@ def main(argv: list[str] | None = None) -> int:
     stage.add_argument("proposal")
     stage.add_argument("destination")
     stage.add_argument("--ledger", help="optional append-only evidence ledger, outside workspace")
+    sandbox = commands.add_parser("sandbox-verify", help="opt-in Docker-only verification; never host fallback")
+    sandbox.add_argument("path")
+    sandbox.add_argument("--image", required=True, help="locally available image@sha256 digest")
+    sandbox.add_argument("--authorize-execution", action="store_true")
+    sandbox.add_argument("--timeout", type=int, default=60)
+    sandbox.add_argument("--ledger")
+    sandbox_compare = commands.add_parser("sandbox-compare", help="compare saved Docker verification reports")
+    sandbox_compare.add_argument("baseline")
+    sandbox_compare.add_argument("candidate")
     audit = commands.add_parser("audit", help="verify ledger hash chain")
     audit.add_argument("ledger")
     args = parser.parse_args(argv)
@@ -61,6 +71,11 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "stage":
             output = stage_proposal(Path(args.source), Path(args.proposal), Path(args.destination),
                                     evidence_ledger=Path(args.ledger) if args.ledger else None)
+        elif args.command == "sandbox-verify":
+            output = sandbox_verify(Path(args.path), image=args.image, authorized=args.authorize_execution,
+                                    timeout=args.timeout, evidence_ledger=Path(args.ledger) if args.ledger else None)
+        elif args.command == "sandbox-compare":
+            output = compare_sandbox_runs(load_json(args.baseline), load_json(args.candidate))
         elif args.command == "record":
             output = append_record(Path(args.ledger), args.kind, load_json(args.payload))
         else:

@@ -36,3 +36,7 @@ Start with local, trusted repository experiments. Introduce a dedicated sandbox,
 The staging operation is deterministic. A proposer supplies a JSON object containing a proposal ID and bounded file replacements with SHA-256 baseline preconditions. GaiaForge checks all operations before copying a source snapshot to a separate directory. The original files are not modified. A unified diff, source and destination digests, AST syntax result and a review-required status are returned. Optionally, a digest summary is written to the evidence ledger.
 
 **Explicit limitation:** the copy is NOT container/VM isolation, a security boundary, or a working LLM agent. The stage command does not run proposed code. It performs no recursive self-improvement, external changes, or production writes. Concurrent edits of source during copying require further TOCTOU controls in a later version.
+
+## v0.3 container verification
+
+The experimental `sandbox.py` runs a fixed test command only after authorization. It copies supported source files into an ephemeral filtered snapshot (excluding common secrets and Git metadata) and binds the snapshot read-only into a digest-pinned Docker image with requested resource/network restrictions. Comparison is advisory, never approval. See `docs/CONTAINER_VERIFICATION.md`. Docker integration and security guarantees are not established by unit mocks alone.

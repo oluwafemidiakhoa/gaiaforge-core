@@ -1,8 +1,8 @@
-# GaiaForge Core v0.2
+# GaiaForge Core v0.3
 
 **Evidence-first engineering workflows with bounded plans, explicit verification, and a chained Improvement Ledger.**
 
-GaiaForge is an experimental GaiaLab project. Version 0.2 is a **working orchestration, change-staging and verification foundation**, not an autonomous software engineer. It does not include a live LLM coding agent, MCP runtime, container sandbox, deployment automation, or scientific validation claims.
+GaiaForge is an experimental GaiaLab project. Version 0.3 adds a **Docker-backed, explicitly authorized verification runner** with a filtered source snapshot. It remains an experimental foundation, not an autonomous software engineer. It does not include a live LLM coding agent, MCP runtime, production deployment, or scientific validation claims.
 
 ## Install
 
@@ -77,6 +77,25 @@ The format of a proposal is:
 
 Use `null` for `previous_sha256` when adding a new file.
 
+## Docker-only controlled verification (experimental, new in v0.3)
+
+The `sandbox-verify` command creates a temporary filtered source snapshot and executes
+allowlisted `unittest` checks in a locally available, digest-pinned Docker image. It
+requires `--authorize-execution` and **never falls back to the host**. Example:
+
+```bash
+gaiaforge sandbox-verify . --image "python@sha256:YOUR_REAL_IMAGE_DIGEST" --authorize-execution --timeout 60 --ledger ../verification.jsonl
+gaiaforge audit ../verification.jsonl
+gaiaforge sandbox-compare baseline-report.json candidate-report.json
+```
+
+The image value above is a placeholder: identify and inspect an actual installed digest
+first. Docker must be installed and authorized. A dedicated isolated Docker host/VM is
+recommended for untrusted input. **Container execution was not integration-tested in
+this build environment because Docker was unavailable.** The container is not a
+certified sandbox. See [the verification guide](docs/CONTAINER_VERIFICATION.md) for
+security limitations and Windows prerequisites.
+
 ## Architecture
 
 - `models.py`: bounded task DAGs, dependencies, approval requirements, no self-approved release
@@ -84,6 +103,7 @@ Use `null` for `previous_sha256` when adding a new file.
 - `verification.py`: opt-in bounded test runner and fixed-suite comparison
 - `ledger.py`: append-only *convention* with hash chaining and integrity audit
 - `staging.py`: checksum-locked, bounded source-copy staging and static syntax checks
+- `sandbox.py`: opt-in Docker-only verification, filtered snapshot and conservative comparison
 - `cli.py`: command-line workflows
 - `api.py`: optional read-only FastAPI service
 - `tests/`: regression and negative safety tests
@@ -99,7 +119,7 @@ Use `null` for `previous_sha256` when adding a new file.
 
 ## Roadmap
 
-1. Implement actual isolated per-task workers with resource/network constraints and a host authorization boundary (the current staged copy is not isolation).
+1. Integration-test and harden container-based workers on a dedicated Docker host/VM; ensure host-enforced grants and pinned images.
 2. Add code dependency graph and actual model adapters in *proposal-only* mode.
 3. Freeze and sign evaluation manifests and benchmark suites; add regression and adversarial tests.
 4. Introduce independent promotion policy, reviewer sign-off, and external ledger anchoring.
