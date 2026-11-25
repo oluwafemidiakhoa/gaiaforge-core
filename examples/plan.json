@@ -1,0 +1,9 @@
+{
+  "tasks": [
+    {"id":"discover", "phase":"inspect", "side_effect":"read", "environment":"sandbox", "depends_on":[], "acceptance":"source inventory hash recorded", "budget_seconds":30, "approval_required":false},
+    {"id":"implement", "phase":"implement", "side_effect":"workspace_write", "environment":"sandbox", "depends_on":["discover"], "acceptance":"reviewable patch prepared", "budget_seconds":300, "approval_required":false},
+    {"id":"test", "phase":"test", "side_effect":"read", "environment":"sandbox", "depends_on":["implement"], "acceptance":"frozen suite run and evidence stored", "budget_seconds":120, "approval_required":false},
+    {"id":"review", "phase":"review", "side_effect":"read", "environment":"sandbox", "depends_on":["test"], "acceptance":"human reviews evidence", "budget_seconds":120, "approval_required":true},
+    {"id":"release", "phase":"release", "side_effect":"external_write", "environment":"staging", "depends_on":["review"], "acceptance":"staging smoke test and rollback ready", "budget_seconds":120, "approval_required":true}
+  ]
+}
