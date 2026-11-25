@@ -1,3 +1,4 @@
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -68,14 +69,28 @@ class LedgerTests(unittest.TestCase):
 
 
 class InspectionTests(unittest.TestCase):
+    def test_ignores_secret_files(self):
+        """Always run this assertion, even without symlink privileges."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "main.py").write_text("print('hello')", encoding="utf-8")
+            (root / ".env").write_text("SECRET=not-for-inspection", encoding="utf-8")
+            output = inspect_repo(root)
+            self.assertEqual([item["path"] for item in output["files"]], ["main.py"])
+
     def test_ignores_secrets_and_symlinks(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "main.py").write_text("print('hello')")
-            (root / ".env").write_text("SECRET=not-for-inspection")
-            (root / "link.py").symlink_to(root / "main.py")
+            (root / "main.py").write_text("print('hello')", encoding="utf-8")
+            (root / ".env").write_text("SECRET=not-for-inspection", encoding="utf-8")
+            try:
+                (root / "link.py").symlink_to(root / "main.py")
+            except OSError as exc:
+                if os.name == "nt" and getattr(exc, "winerror", None) == 1314:
+                    self.skipTest("Windows symlink creation privilege unavailable")
+                raise
             output = inspect_repo(root)
-            self.assertEqual([x["path"] for x in output["files"]], ["main.py"])
+            self.assertEqual([item["path"] for item in output["files"]], ["main.py"])
 
 
 class VerificationTests(unittest.TestCase):

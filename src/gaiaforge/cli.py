@@ -22,7 +22,7 @@ def load_json(path: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="gaiaforge", description="GaiaForge Core v0.1")
+    parser = argparse.ArgumentParser(prog="gaiaforge", description="GaiaForge Core v0.2.1")
     commands = parser.add_subparsers(dest="command", required=True)
     inspect = commands.add_parser("inspect", help="hash a bounded, allowlisted file inventory")
     inspect.add_argument("path")

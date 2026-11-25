@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -63,7 +64,12 @@ class StagingTests(unittest.TestCase):
             stage_proposal(self.source, self.proposal, self.dest)
 
     def test_symlink_in_source_rejected(self):
-        (self.source / 'evil.py').symlink_to(self.root / 'outside')
+        try:
+            (self.source / 'evil.py').symlink_to(self.root / 'outside')
+        except OSError as exc:
+            if os.name == 'nt' and getattr(exc, 'winerror', None) == 1314:
+                self.skipTest('Windows symlink creation privilege unavailable')
+            raise
         self.make_proposal()
         with self.assertRaises(ProposalError):
             stage_proposal(self.source, self.proposal, self.dest)
@@ -93,7 +99,12 @@ class StagingTests(unittest.TestCase):
             stage_proposal(self.source, self.proposal, self.dest)
 
     def test_source_symlink_directory_rejected(self):
-        (self.source / 'outside').symlink_to(self.root, target_is_directory=True)
+        try:
+            (self.source / 'outside').symlink_to(self.root, target_is_directory=True)
+        except OSError as exc:
+            if os.name == 'nt' and getattr(exc, 'winerror', None) == 1314:
+                self.skipTest('Windows directory symlink creation privilege unavailable')
+            raise
         self.make_proposal()
         with self.assertRaises(ProposalError):
             stage_proposal(self.source, self.proposal, self.dest)
