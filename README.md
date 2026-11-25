@@ -161,3 +161,7 @@ metadata only when the path is the root of its own checkout, protecting against
 accidentally picking up a Git repository in a parent Windows user directory.
 This is **not authenticated provenance**, and release authorization remains false.
 See [the receipt verification guide](docs/RECEIPT_VERIFICATION.md).
+
+## v0.6 experimental frozen protocols
+
+`gaiaforge freeze-protocol` saves a versioned SHA-256 fingerprint for a test suite and pinned image outside the repository; `gaiaforge verify-experiment` checks both baseline and candidate report/ledger pairs against that freeze. This is local evidence validation, not trusted attestation or authorization. See [docs/FROZEN_PROTOCOL.md](docs/FROZEN_PROTOCOL.md).

@@ -14,6 +14,7 @@ from .verification import compare_evaluations, run_verification
 from .sandbox import sandbox_verify, compare_sandbox_runs
 from .improvement import assess_candidates
 from .provenance import verify_receipt
+from .protocol import freeze_protocol, verify_experiment
 
 
 def load_json(path: str) -> dict:
@@ -25,7 +26,7 @@ def load_json(path: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="gaiaforge", description="GaiaForge Core v0.5.0")
+    parser = argparse.ArgumentParser(prog="gaiaforge", description="GaiaForge Core v0.6.0")
     commands = parser.add_subparsers(dest="command", required=True)
     inspect = commands.add_parser("inspect", help="hash a bounded, allowlisted file inventory")
     inspect.add_argument("path")
@@ -64,6 +65,19 @@ def main(argv: list[str] | None = None) -> int:
     receipt.add_argument("report")
     receipt.add_argument("ledger")
     receipt.add_argument("--expected-head", help="head hash obtained from a separately trusted source")
+    freeze = commands.add_parser("freeze-protocol", help="freeze a suite and pinned image without execution")
+    freeze.add_argument("path")
+    freeze.add_argument("destination", help="new JSON file outside evaluated repository")
+    freeze.add_argument("--image", required=True)
+    freeze.add_argument("--id", required=True, dest="protocol_id")
+    experiment = commands.add_parser("verify-experiment", help="review paired Docker receipts against frozen protocol")
+    experiment.add_argument("protocol")
+    experiment.add_argument("baseline_report")
+    experiment.add_argument("baseline_ledger")
+    experiment.add_argument("candidate_report")
+    experiment.add_argument("candidate_ledger")
+    experiment.add_argument("--baseline-head")
+    experiment.add_argument("--candidate-head")
     audit = commands.add_parser("audit", help="verify ledger hash chain")
     audit.add_argument("ledger")
     args = parser.parse_args(argv)
@@ -89,6 +103,14 @@ def main(argv: list[str] | None = None) -> int:
             output = assess_candidates(Path(args.manifest), evidence_ledger=Path(args.ledger) if args.ledger else None)
         elif args.command == "verify-receipt":
             output = verify_receipt(Path(args.report), Path(args.ledger), expected_head=args.expected_head)
+        elif args.command == "freeze-protocol":
+            output = freeze_protocol(Path(args.path), Path(args.destination), image=args.image,
+                                     protocol_id=args.protocol_id)
+        elif args.command == "verify-experiment":
+            output = verify_experiment(Path(args.protocol), Path(args.baseline_report), Path(args.baseline_ledger),
+                                       Path(args.candidate_report), Path(args.candidate_ledger),
+                                       expected_baseline_head=args.baseline_head,
+                                       expected_candidate_head=args.candidate_head)
         elif args.command == "record":
             output = append_record(Path(args.ledger), args.kind, load_json(args.payload))
         else:

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gaiaforge-core"
-version = "0.5.0"
+version = "0.6.0"
 description = "Evidence-first engineering with checksum-locked staging and fail-closed container verification and evidence-gated candidate review and local receipt checks"
 readme = "README.md"
 requires-python = ">=3.10"
