@@ -1,2 +1,3 @@
-"""GaiaForge Core: bounded, evidence-first engineering workflows."""
-__version__ = "0.1.0"
+"""GaiaForge Core: evidence-first engineering primitives."""
+
+__version__ = "0.2.0"

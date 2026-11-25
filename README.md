@@ -1,8 +1,8 @@
-# GaiaForge Core v0.1
+# GaiaForge Core v0.2
 
 **Evidence-first engineering workflows with bounded plans, explicit verification, and a chained Improvement Ledger.**
 
-GaiaForge is an experimental GaiaLab project. Version 0.1 is a **working orchestration and verification foundation**, not an autonomous software engineer. It does not include a live LLM coding agent, MCP runtime, container sandbox, deployment automation, or scientific validation claims.
+GaiaForge is an experimental GaiaLab project. Version 0.2 is a **working orchestration, change-staging and verification foundation**, not an autonomous software engineer. It does not include a live LLM coding agent, MCP runtime, container sandbox, deployment automation, or scientific validation claims.
 
 ## Install
 
@@ -43,12 +43,47 @@ uvicorn gaiaforge.api:app --host 127.0.0.1 --port 8000
 
 Endpoints: `GET /health`, `POST /plans/validate`, `POST /evaluations/compare`. The optional API is read-only and intentionally has no network-accessible execution endpoint.
 
+## Checksum-locked change proposals (new in v0.2)
+
+`stage` reads a JSON proposal, verifies original file hashes, copies allowlisted text files
+into a **separate review workspace**, applies bounded replacements and performs Python AST
+syntax checks. It does not execute the proposed code, access a model, or deploy changes.
+
+```bash
+# Create a small trusted test repository and generate a proposal for it:
+python examples/make_staging_demo.py
+# Stage a copy; the original demo/source directory remains unchanged:
+gaiaforge stage demo/source demo/proposal.json demo/review --ledger demo/evidence.jsonl
+# Independently audit the evidence chain:
+gaiaforge audit demo/evidence.jsonl
+```
+
+**Security note:** copying files to a directory does not constitute security isolation.
+Do not execute untrusted source in a staged workspace on your host. The staging command
+rejects path traversal, symlinks, unknown file types, oversized proposals and stale SHA-256
+baselines. Syntax validation is not a safety or correctness guarantee. A future code agent
+will need a separately enforced operating-system or VM isolation boundary.
+
+The format of a proposal is:
+
+```json
+{
+  "proposal_id": "fix-001",
+  "operations": [
+    {"path": "main.py", "previous_sha256": "<64 lowercase hex characters>", "content": "value = 2\n"}
+  ]
+}
+```
+
+Use `null` for `previous_sha256` when adding a new file.
+
 ## Architecture
 
 - `models.py`: bounded task DAGs, dependencies, approval requirements, no self-approved release
 - `inspect.py`: allowlisted repository file inventory and SHA-256 digests
 - `verification.py`: opt-in bounded test runner and fixed-suite comparison
 - `ledger.py`: append-only *convention* with hash chaining and integrity audit
+- `staging.py`: checksum-locked, bounded source-copy staging and static syntax checks
 - `cli.py`: command-line workflows
 - `api.py`: optional read-only FastAPI service
 - `tests/`: regression and negative safety tests
@@ -64,7 +99,7 @@ Endpoints: `GET /health`, `POST /plans/validate`, `POST /evaluations/compare`. T
 
 ## Roadmap
 
-1. Implement isolated per-task workers with resource/network constraints and a host authorization boundary.
+1. Implement actual isolated per-task workers with resource/network constraints and a host authorization boundary (the current staged copy is not isolation).
 2. Add code dependency graph and actual model adapters in *proposal-only* mode.
 3. Freeze and sign evaluation manifests and benchmark suites; add regression and adversarial tests.
 4. Introduce independent promotion policy, reviewer sign-off, and external ledger anchoring.

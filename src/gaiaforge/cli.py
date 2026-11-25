@@ -9,6 +9,7 @@ from pathlib import Path
 from .inspect import inspect_repo
 from .ledger import append_record, read_verified
 from .models import eligible_tasks, validate_plan
+from .staging import stage_proposal, ProposalError
 from .verification import compare_evaluations, run_verification
 
 
@@ -39,6 +40,11 @@ def main(argv: list[str] | None = None) -> int:
     append.add_argument("ledger")
     append.add_argument("kind")
     append.add_argument("payload", help="JSON file containing a payload object")
+    stage = commands.add_parser("stage", help="stage checksum-locked text edits in a separate review workspace")
+    stage.add_argument("source")
+    stage.add_argument("proposal")
+    stage.add_argument("destination")
+    stage.add_argument("--ledger", help="optional append-only evidence ledger, outside workspace")
     audit = commands.add_parser("audit", help="verify ledger hash chain")
     audit.add_argument("ledger")
     args = parser.parse_args(argv)
@@ -52,6 +58,9 @@ def main(argv: list[str] | None = None) -> int:
             output = run_verification(Path(args.path), args.check, authorized=args.authorize_execution, timeout=args.timeout)
         elif args.command == "compare":
             output = compare_evaluations(load_json(args.baseline), load_json(args.candidate))
+        elif args.command == "stage":
+            output = stage_proposal(Path(args.source), Path(args.proposal), Path(args.destination),
+                                    evidence_ledger=Path(args.ledger) if args.ledger else None)
         elif args.command == "record":
             output = append_record(Path(args.ledger), args.kind, load_json(args.payload))
         else:

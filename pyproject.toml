@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gaiaforge-core"
-version = "0.1.0"
-description = "Evidence-first, bounded agent engineering with verification and append-only improvement records"
+version = "0.2.0"
+description = "Evidence-first engineering with checksum-locked change staging and verification"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{name = "GaiaLab"}]
