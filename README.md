@@ -151,3 +151,13 @@ gaiaforge assess-improvements examples\improvement\generated\manifest.json
 The example reports are **synthetic**. See `docs/IMPROVEMENT_GATE.md` for format,
 security limitations and evidence provenance requirements. No live LLM agent,
 automated patch generation or self-modifying recursion is implemented in v0.4.
+
+## v0.5: receipt cross-checking (experimental)
+
+The `verify-receipt` command compares a saved `sandbox-verify` JSON report with
+its chained ledger entry, optionally comparing the ledger head to an independently
+saved hash. Container reports also include best-effort Git HEAD/clean-worktree
+metadata only when the path is the root of its own checkout, protecting against
+accidentally picking up a Git repository in a parent Windows user directory.
+This is **not authenticated provenance**, and release authorization remains false.
+See [the receipt verification guide](docs/RECEIPT_VERIFICATION.md).

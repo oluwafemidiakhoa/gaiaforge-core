@@ -18,6 +18,7 @@ import time
 from pathlib import Path
 
 from .ledger import append_record
+from .provenance import source_identity
 
 _IMAGE = re.compile(r"^[a-z0-9][a-z0-9._:/-]*@sha256:[0-9a-f]{64}$")
 _MAX_OUTPUT = 16_000
@@ -203,6 +204,7 @@ def sandbox_verify(repo: Path, *, image: str, authorized: bool = False,
         evidence_ledger = Path(evidence_ledger).resolve(strict=False)
         if evidence_ledger == repo or repo in evidence_ledger.parents:
             raise SandboxError("evidence ledger must be outside tested repository")
+    identity = source_identity(repo)
     suite_id = _suite_digest(repo)
     with tempfile.TemporaryDirectory(prefix="gaiaforge-snapshot-") as folder:
         snapshot = Path(folder)
@@ -219,7 +221,7 @@ def sandbox_verify(repo: Path, *, image: str, authorized: bool = False,
               "snapshot_sha256": snapshot_id, "image": image,
               "backend": "docker", "network_disabled": True, "read_only_workspace": True,
               "source_snapshot_filtered": True, "sandboxed": True,
-              "release_authorized": False, **result}
+              "release_authorized": False, **identity, **result}
     if evidence_ledger is not None:
         rec = append_record(evidence_ledger, "container_verification", {
             k: v for k, v in report.items() if k != "output_excerpt"})

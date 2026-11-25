@@ -13,6 +13,7 @@ from .staging import stage_proposal, ProposalError
 from .verification import compare_evaluations, run_verification
 from .sandbox import sandbox_verify, compare_sandbox_runs
 from .improvement import assess_candidates
+from .provenance import verify_receipt
 
 
 def load_json(path: str) -> dict:
@@ -24,7 +25,7 @@ def load_json(path: str) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="gaiaforge", description="GaiaForge Core v0.4.0")
+    parser = argparse.ArgumentParser(prog="gaiaforge", description="GaiaForge Core v0.5.0")
     commands = parser.add_subparsers(dest="command", required=True)
     inspect = commands.add_parser("inspect", help="hash a bounded, allowlisted file inventory")
     inspect.add_argument("path")
@@ -59,6 +60,10 @@ def main(argv: list[str] | None = None) -> int:
     improve = commands.add_parser("assess-improvements", help="review bounded proposal candidates using frozen Docker reports")
     improve.add_argument("manifest")
     improve.add_argument("--ledger")
+    receipt = commands.add_parser("verify-receipt", help="check saved Docker report against ledger receipt")
+    receipt.add_argument("report")
+    receipt.add_argument("ledger")
+    receipt.add_argument("--expected-head", help="head hash obtained from a separately trusted source")
     audit = commands.add_parser("audit", help="verify ledger hash chain")
     audit.add_argument("ledger")
     args = parser.parse_args(argv)
@@ -82,6 +87,8 @@ def main(argv: list[str] | None = None) -> int:
             output = compare_sandbox_runs(load_json(args.baseline), load_json(args.candidate))
         elif args.command == "assess-improvements":
             output = assess_candidates(Path(args.manifest), evidence_ledger=Path(args.ledger) if args.ledger else None)
+        elif args.command == "verify-receipt":
+            output = verify_receipt(Path(args.report), Path(args.ledger), expected_head=args.expected_head)
         elif args.command == "record":
             output = append_record(Path(args.ledger), args.kind, load_json(args.payload))
         else:
